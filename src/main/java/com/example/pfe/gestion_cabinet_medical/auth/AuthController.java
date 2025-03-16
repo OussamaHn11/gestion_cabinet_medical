@@ -42,9 +42,9 @@ public class AuthController {
         }
     }
     @PostMapping("/authenticate")
-    public ResponseEntity<?> authenticate(@RequestBody com.example.pfe.gestion_cabinet_medical.auth.LoginRequest request) {
+    public ResponseEntity<?> authenticate(@RequestBody LoginRequest request) {
         try {
-            com.example.pfe.gestion_cabinet_medical.auth.LoginResponse response = service.authenticate(request);
+            LoginResponse response = service.authenticate(request);
 
             // Vérifiez que le token est bien généré et transmis
             if (response.getToken() == null || response.getToken().isEmpty()) {

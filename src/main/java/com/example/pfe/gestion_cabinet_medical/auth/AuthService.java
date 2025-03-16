@@ -27,10 +27,10 @@ public class AuthService {
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
     @Autowired
     private PasswordEncoder passwordEncoder;
-    public com.example.pfe.gestion_cabinet_medical.auth.LoginResponse register(com.example.pfe.gestion_cabinet_medical.auth.RegisterRequest request) {
+    public com.example.pfe.gestion_cabinet_medical.AUTH.LoginResponse register(com.example.pfe.gestion_cabinet_medical.AUTH.RegisterRequest request) {
         User user = null; var jwtToken = jwtService.generateToken(user);
         log.info("JWT Token generated: {}", jwtToken);
-        return com.example.pfe.gestion_cabinet_medical.auth.LoginResponse.builder()
+        return com.example.pfe.gestion_cabinet_medical.AUTH.LoginResponse.builder()
                 .token(jwtToken)
                 .build();
     }
@@ -50,7 +50,7 @@ public class AuthService {
         repository.save(utilisateur); // Utilisez 'repository' ici pour sauvegarder dans la base de données
     }
 
-    public com.example.pfe.gestion_cabinet_medical.auth.LoginResponse authenticate(com.example.pfe.gestion_cabinet_medical.auth.LoginRequest request) {
+    public LoginResponse authenticate(LoginRequest request) {
         var user = repository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new RuntimeException("Adresse mail ou Mot de passe Incorrect"));
 
@@ -66,7 +66,7 @@ public class AuthService {
                 .build();
 
         var jwtToken = jwtService.generateToken(userDetails);
-        return new com.example.pfe.gestion_cabinet_medical.auth.LoginResponse(jwtToken);
+        return new LoginResponse(jwtToken);
     }}
 
 
