@@ -15,6 +15,7 @@ public class Utilisateur {
     @Id
     @GeneratedValue(strategy = GenerationType.TABLE)
     private Long id;
+
     @Column(nullable = false)
     private String nom;
     @Column(nullable = false,unique = true)
@@ -26,6 +27,7 @@ public class Utilisateur {
     @Column(nullable = false)
     private String password;
     @Column(nullable = false)
+
     private String prénom ;
 
     public String getUsername() {
