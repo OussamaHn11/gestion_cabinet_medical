@@ -1,6 +1,7 @@
-package com.example.pfe.gestion_cabinet_medical.service;
+package com.example.pfe.gestion_cabinet_medical.config;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -20,27 +21,23 @@ public class JwtService {
 
     @Value("${jwt.secret}")
     private String secretKey;
-
+    private static final String SECRET_KEY ="1f27e8dd62e27a9f13f64d9d9b989bc8623ea4c64f309c3059a1b7454c717a15";
     @Value("${jwt.expiration}")
     private Long jwtExpiration;
 
-    // Extraire le nom d'utilisateur depuis le JWT
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    // Extraire des informations spécifiques du JWT
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
-    // Générer un JWT à partir des détails de l'utilisateur
     public String generateToken(UserDetails userDetails) {
         return generateToken(new HashMap<>(), userDetails);
     }
 
-    // Générer un JWT avec des informations supplémentaires
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return Jwts.builder()
                 .setClaims(extraClaims)
@@ -51,23 +48,19 @@ public class JwtService {
                 .compact();
     }
 
-    // Vérifier la validité du JWT
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
-    // Vérifier si le JWT est expiré
     private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 
-    // Extraire la date d'expiration du JWT
     private Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    // Extraire toutes les informations du JWT
     private Claims extractAllClaims(String token) {
         try {
             return Jwts.parserBuilder()
@@ -75,18 +68,24 @@ public class JwtService {
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
-        } catch (Exception e) {
-            throw new RuntimeException("Le JWT est malformé ou invalide : " + e.getMessage());
+        } catch (JwtException e) {
+            throw new JwtException("Le JWT est invalide ou mal formé: " + e.getMessage());
         }
     }
 
-    // Récupérer la clé de signature
     private Key getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }
+    public boolean validateToken(String token, UserDetails userDetails) {
+        try {
+            Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token);
+            return !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
-    // Vérifier que le JWT est valide
     public boolean isValidJwt(String token) {
         return token != null && token.split("\\.").length == 3;
     }

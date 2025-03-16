@@ -1,6 +1,6 @@
 package com.example.pfe.gestion_cabinet_medical.config;
 
-import com.example.pfe.gestion_cabinet_medical.service.JwtService;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -25,59 +25,50 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
-
-    // Injection via le constructeur pour suivre les bonnes pratiques de Spring
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     public JwtAuthenticationFilter(JwtService jwtService, UserDetailsService userDetailsService) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
+    protected void doFilterInternal(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain
+    ) throws ServletException, IOException {
+        // Vérifier si la requête est pour un endpoint de génération de token (exemple : /login)
+        if (request.getRequestURI().contains("/login")) {
+            filterChain.doFilter(request, response);
+            return; // Pas besoin de vérifier le JWT pour cette route
+        }
 
-        // Récupérer le header Authorization
         final String authHeader = request.getHeader("Authorization");
-
-        // Vérifier que le header est valide
-        if (StringUtils.isEmpty(authHeader) || !authHeader.startsWith("Bearer ")) {
+        final String jwt;
+        final String userEmail;
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            log.warn("JWT Token not found in request.");
             filterChain.doFilter(request, response);
             return;
         }
-
-        final String jwt = authHeader.substring(7); // Extraire le token JWT
-        String username = null;
-
-        try {
-            // Vérifier que le JWT est valide et extraire le nom d'utilisateur
-            if (jwtService.isValidJwt(jwt)) {
-                username = jwtService.extractUsername(jwt); // Extraire le nom d'utilisateur
-            }
-        } catch (Exception e) {
-            logger.error("Erreur lors de l'extraction ou de la validation du JWT", e);
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // Si le nom d'utilisateur est trouvé et aucun utilisateur n'est encore authentifié
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-            // Vérifier la validité du token
-            if (jwtService.isTokenValid(jwt, userDetails)) {
-                // Créer un token d'authentification
+        jwt = authHeader.substring(7);
+        userEmail = jwtService.extractUsername(jwt);
+        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+            if (jwtService.validateToken(jwt, userDetails)) {
+                log.info("JWT Token validated successfully for user: {}", userEmail);
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-
-                // Ajouter les détails d'authentification dans le contexte de sécurité
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        userDetails,
+                        null,
+                        userDetails.getAuthorities()
+                );
+                authToken.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request)
+                );
                 SecurityContextHolder.getContext().setAuthentication(authToken);
-
-                logger.info("Utilisateur authentifié : {}", username);
+            } else {
+                log.warn("JWT Token validation failed for user: {}", userEmail);
             }
         }
-
-        // Passer au prochain filtre
         filterChain.doFilter(request, response);
-    }
-}
+    }}

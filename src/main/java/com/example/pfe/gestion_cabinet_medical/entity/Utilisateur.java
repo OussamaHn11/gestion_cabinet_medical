@@ -15,17 +15,17 @@ public class Utilisateur {
     @Id
     @GeneratedValue(strategy = GenerationType.TABLE)
     private Long id;
-    @Column(nullable = false)
+
     private String nom;
     @Column(nullable = false,unique = true)
     private String username;
-    @Column(nullable = false)
+
     private String téléphone;
     @Column(nullable = false, unique = true)
     private String email;
     @Column(nullable = false)
     private String password;
-    @Column(nullable = false)
+
     private String prénom ;
 
     public String getUsername() {

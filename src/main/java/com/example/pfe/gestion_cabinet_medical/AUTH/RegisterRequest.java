@@ -1,6 +1,5 @@
-package com.example.pfe.gestion_cabinet_medical.auth;
+package com.example.pfe.gestion_cabinet_medical.AUTH;
 
-import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -28,7 +28,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/authentication/**").permitAll()
                         .requestMatchers("/api/medecin/**").hasRole("MEDECIN")
                         .requestMatchers("/api/secretaire/**").hasRole("SECRETAIRE")
-                        .anyRequest().authenticated()
+                        .anyRequest().authenticated()  // 🚧 Toutes les autres requêtes nécessitent un token
                 )
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
